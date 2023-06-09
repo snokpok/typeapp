@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { ChangeEventHandler, useEffect, useRef, useState } from 'react'
 import './App.css'
 
 const similarUpTo = (a: string, b: string): number => {
@@ -19,7 +19,7 @@ const Cursor = () => {
     return () => clearInterval(int);
   }, [])
   return (
-    <span className="w-12">{solid ? (<span className="w-full h-full bg-white border border-white" />) : (<span className="h-full bg-none border border-white" />)}</span>
+    <span className="w-12">{solid ? (<span className="w-full h-full dark:bg-white white:bg-black border dark:border-white border-black" />) : (<span className="h-full bg-none border border-gray-300 dark:border-gray-500" />)}</span>
   )
 }
 
@@ -41,7 +41,7 @@ const prompts = [
 ]
 
 const sample = (arr: any[]) => {
-  const choice = Math.floor(Math.random() * (arr.length-1))
+  const choice = Math.floor(Math.random() * (arr.length - 1))
   return arr[choice]
 }
 
@@ -107,11 +107,27 @@ function App() {
 
   const resetTest = () => {
     setUserInput("");
-    setWps(0/0);
+    setWps(0 / 0);
     setCTI(0);
     setSecondsElapsed(0);
     setTestState(TestState.NOT_STARTED);
     setSampleText(sample(prompts));
+  }
+
+  const handleInputChange: ChangeEventHandler<HTMLInputElement> = (ev) => {
+    // space at beginning -> not allowed
+    if (userInput.length === 0 && ev.target.value === " ") {
+      return;
+    }
+    const last = ev.target.value[ev.target.value.length - 1];
+    const secondLast = ev.target.value[ev.target.value.length - 2];
+    // >=1 space at the end -> not allowed
+    if (userInput.length > 0 && last === secondLast && last === " ") {
+      return;
+    }
+    const sut = similarUpTo(ev.target.value, sampleText);
+    setCTI(sut);
+    setUserInput(ev.target.value);
   }
 
   return (
@@ -119,29 +135,15 @@ function App() {
       <div className="w-96 text-left">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <button onClick={resetTest} disabled={testState !== TestState.DONE} className="disabled:opacity-20">Reset</button>
-            <p className="text-gray-400 italic">{testState}{testState===TestState.NOT_STARTED && ". Type to start"}</p>
+            <button onClick={resetTest} disabled={testState !== TestState.DONE} className="disabled:opacity-20 dark:bg-white dark:text-black bg-black text-white">Reset</button>
+            <p className="text-gray-400 italic">{testState}{testState === TestState.NOT_STARTED && ". Type to start"}</p>
           </div>
-          {(testState===TestState.RUNNING || testState===TestState.DONE) && <p>{Math.floor(wps * 60)} wpm</p>}
+          {(testState === TestState.RUNNING || testState === TestState.DONE) && <p>{Math.floor(wps * 60)} wpm</p>}
         </div>
         <div>
-          <p><span className='text-yellow-300'>{correctText}</span><span className="bg-red-500 opacity-30">{wrongText}</span><Cursor />{remainderText}</p>
+          <p><span className='dark:text-yellow-300 text-green-700'>{correctText}</span><span className="bg-red-500 opacity-30">{wrongText}</span><Cursor />{remainderText}</p>
         </div>
-        <input value={userInput} onChange={(ev) => {
-          // space at beginning -> not allowed
-          if(userInput.length===0 && ev.target.value===" ") {
-            return;
-          }
-          const last = ev.target.value[ev.target.value.length-1];
-          const secondLast = ev.target.value[ev.target.value.length-2];
-          // >=1 space at the end -> not allowed
-          if(userInput.length>0 && last===secondLast && last === " ") {
-            return;
-          }
-          const sut = similarUpTo(ev.target.value, sampleText);
-          setCTI(sut);
-          setUserInput(ev.target.value);
-        }} ref={hiddenInputRef} className="opacity-0" />
+        <input value={userInput} onChange={handleInputChange} ref={hiddenInputRef} className="opacity-100 border border-gray-300 disabled:opacity-50" placeholder="Type here..." />
       </div>
     </>
   )
