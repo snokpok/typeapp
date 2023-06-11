@@ -2,6 +2,7 @@ import { ChangeEventHandler, useEffect, useRef, useState } from 'react'
 import './App.css'
 import axios from 'axios';
 import {Player} from '../types/leaderboard'
+import { Input } from './components/input';
 
 const similarUpTo = (a: string, b: string): number => {
   const limit = Math.min(a.length, b.length);
@@ -50,7 +51,7 @@ const sample = (arr: any[]) => {
 const Leaderboard = (props: {leaderboard: Player[]}) => {
   return (
     <div className="flex flex-col items-center gap-3">
-      <h1 className="text-xl font-bold text-black">Leaderboard:</h1>
+      <h1 className="text-xl font-bold">Leaderboard:</h1>
       {props.leaderboard.map((el, i) => (
         <p>{i+1} | {el.username} | {el.wpm}wpm</p>
       ))}
@@ -170,20 +171,20 @@ function App() {
   return (
     <div className="flex gap-10">
       <div className="w-96 text-left">
-        <input className="border border-gray-300" value={username} placeholder="Username" onChange={(ev) => {
+        <Input value={username} placeholder="Put a username here" onChange={(ev) => {
           setUsername(ev.target.value);
         }} />
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between my-3">
           <div className="flex items-center gap-3">
             <button onClick={resetTest} disabled={testState !== TestState.DONE} className="disabled:opacity-20 dark:bg-white dark:text-black bg-black text-white">Reset</button>
             <p className="text-gray-400 italic">{testState}{testState === TestState.NOT_STARTED && ". Type to start"}</p>
           </div>
           {(testState === TestState.RUNNING || testState === TestState.DONE) && <p>{wpm} wpm</p>}
         </div>
-        <div>
+        <div className="my-2">
           <p><span className='dark:text-yellow-300 text-green-700'>{correctText}</span><span className="bg-red-500 opacity-30">{wrongText}</span><Cursor />{remainderText}</p>
         </div>
-        <input value={userInput} onChange={handleInputChange} ref={hiddenInputRef} className="opacity-100 border border-gray-300 disabled:opacity-50" placeholder="Type here..." />
+        <Input value={userInput} onChange={handleInputChange} ref={hiddenInputRef} placeholder="Type here..." />
       </div>
       <Leaderboard leaderboard={leaderboardData}/>
     </div>
