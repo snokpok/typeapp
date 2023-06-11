@@ -1,5 +1,7 @@
 import { ChangeEventHandler, useEffect, useRef, useState } from 'react'
 import './App.css'
+import axios from 'axios';
+import {Player} from '../types/leaderboard'
 
 const similarUpTo = (a: string, b: string): number => {
   const limit = Math.min(a.length, b.length);
@@ -45,6 +47,17 @@ const sample = (arr: any[]) => {
   return arr[choice]
 }
 
+const Leaderboard = (props: {leaderboard: Player[]}) => {
+  return (
+    <div className="flex flex-col items-center gap-3">
+      <h1 className="text-xl font-bold text-black">Leaderboard:</h1>
+      {props.leaderboard.map((el, i) => (
+        <p>{i+1} | {el.username} | {el.wpm}wpm</p>
+      ))}
+    </div>
+  )
+}
+
 function App() {
   const [sampleText, setSampleText] = useState(() => sample(prompts));
   const [userInput, setUserInput] = useState("")
@@ -53,11 +66,24 @@ function App() {
   const [secondsElapsed, setSecondsElapsed] = useState(0);
   const [testState, setTestState] = useState<TestState>(TestState.NOT_STARTED);
   const hiddenInputRef = useRef<HTMLInputElement>(null);
+  const [username, setUsername] = useState("");
+  const wpm = Math.floor(wps * 60);
+  const [leaderboardData, setLeaderboardData] = useState<Player[]>([]);
+  const [refetchLeaderboard, setRefetchLeaderboard] = useState(true);
 
   // derived states
   const correctText = sampleText.slice(0, correctToIndex)
   const wrongText = userInput.slice(correctToIndex)
   const remainderText = sampleText.slice(correctToIndex);
+
+  // (re)fetching the leaderboard
+  useEffect(() => {
+    if(!refetchLeaderboard) return;
+    axios.get("/api/get-leaderboard").then((res) => {
+      setLeaderboardData(res.data?.data ?? []);
+      setRefetchLeaderboard(false);
+    })
+  }, [refetchLeaderboard])
 
   useEffect(() => {
     // kick off timer by typing on the keyboard
@@ -67,10 +93,21 @@ function App() {
     // done state
     if (userInput === sampleText) {
       setTestState(TestState.DONE);
+      // save score in the leaderboard if has username
+      if(username.length===0) return;
+      axios.post("/api/upsert-leaderboard", {
+        username, wpm,
+      }).then(() => {
+        console.log("saved score to leaderboard")
+        // refetch leaderboard
+        setRefetchLeaderboard(true);
+      }).catch((e) => {
+        console.error(e);
+      });
     }
   }, [userInput])
 
-  // focus onto the hidden input so that people can type
+  // focus onto the hidden input so that people can type from the start
   useEffect(() => {
     hiddenInputRef.current?.focus();
   }, [])
@@ -131,21 +168,25 @@ function App() {
   }
 
   return (
-    <>
+    <div className="flex gap-10">
       <div className="w-96 text-left">
+        <input className="border border-gray-300" value={username} placeholder="Username" onChange={(ev) => {
+          setUsername(ev.target.value);
+        }} />
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button onClick={resetTest} disabled={testState !== TestState.DONE} className="disabled:opacity-20 dark:bg-white dark:text-black bg-black text-white">Reset</button>
             <p className="text-gray-400 italic">{testState}{testState === TestState.NOT_STARTED && ". Type to start"}</p>
           </div>
-          {(testState === TestState.RUNNING || testState === TestState.DONE) && <p>{Math.floor(wps * 60)} wpm</p>}
+          {(testState === TestState.RUNNING || testState === TestState.DONE) && <p>{wpm} wpm</p>}
         </div>
         <div>
           <p><span className='dark:text-yellow-300 text-green-700'>{correctText}</span><span className="bg-red-500 opacity-30">{wrongText}</span><Cursor />{remainderText}</p>
         </div>
         <input value={userInput} onChange={handleInputChange} ref={hiddenInputRef} className="opacity-100 border border-gray-300 disabled:opacity-50" placeholder="Type here..." />
       </div>
-    </>
+      <Leaderboard leaderboard={leaderboardData}/>
+    </div>
   )
 }
 
