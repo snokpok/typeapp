@@ -11,6 +11,7 @@ node_modules
 dist
 dist-ssr
 *.local
+.env
 
 # Editor directories and files
 .vscode/*
@@ -23,3 +24,22 @@ dist-ssr
 *.sln
 *.sw?
 .vercel
+
+# Yarn 2
+.yarn/*
+!.yarn/releases
+!.yarn/plugins
+!.yarn/sdks
+!.yarn/patches
+!.yarnrc.yml
+!.yarn/install-state.gz
+
+# Ignore Yarn cache if not using Zero-Installs
+.yarn/cache/
+
+# Node modules
+node_modules/
+
+# PnP files (if using PnP)
+.pnp.cjs
+.pnp.loader.mjs

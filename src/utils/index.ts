@@ -1,8 +1,7 @@
 export const sample = (arr: any[]) => {
-  const choice = Math.floor(Math.random() * (arr.length - 1))
-  return arr[choice]
-}
-
+  const choice = Math.floor(Math.random() * (arr.length - 1));
+  return arr[choice];
+};
 
 export const similarUpTo = (a: string, b: string): number => {
   const limit = Math.min(a.length, b.length);
@@ -10,10 +9,13 @@ export const similarUpTo = (a: string, b: string): number => {
   for (; i < limit; i++) {
     if (a[i] !== b[i]) break;
   }
-  return i
-}
+  return i;
+};
 
+const PUNCTUATIONS_RE = /[.,!?;:(){}[\]"'`~@#$%^&*+=<>|\\\-/]/g;
 
 export const countWords = (text: string) => {
-  return text.split(" ").length;
-}
+  const cleanText = text.replace(PUNCTUATIONS_RE, "").toLowerCase();
+  const words = cleanText.split(/\s+/).filter((el) => el !== "");
+  return words.length;
+};
